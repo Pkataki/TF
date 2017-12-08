@@ -6,7 +6,7 @@ from Queue import *
 
 number_process = 3
 
-ports = [5005, 5006, 5007]
+ports = [7502, 7503, 7420]
 	
 
 class process():
@@ -20,7 +20,6 @@ class process():
 	def __init__(self):
 		self.clock = 0
 		self.q = Queue()
-		self.init_threads()
 
 	def set_num_process(self, num_process):
 		self.num_process = num_process
@@ -41,6 +40,7 @@ class process():
 		self.clock = max (self.clock + 1 , time_stamp + 1 )
 
 	def make_request(self, t):
+
 		tup1 = ("wanted", self.num_process, t)
 		for i in range(0,number_process-1):
 			if i == self.num_process:
@@ -48,57 +48,68 @@ class process():
 			addr = (('127.0.0.1',ports[i])) 
 			client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 			client_socket.connect(addr)
-			client_socket.send(bytes(tup1))
-			state = eval(client_socket.recv(1024))
+			client_socket.send(bytes(str(bytes(tup1))))
+			s = client_socket.recv(1024)
+
+			if s == "":
+				continue
+
+			state = eval(s)
 			if state[0]  == "held":
 				return False; 
 			client_socket.close()
 		return True
 
 	def enter_critical_region(self):
-		cont = 0
-		while cont < 10:
-			cont += 1
+
+		while True:
+			
 			self.state = "wanted"
 			t = random.randint(0 ,number_process)
 			if self.make_request(t)  == True : 
 				self.state = "held"
 			#inside critical region
-			sleep(5)
+			time.sleep(5)
 			#out of critical region
 			self.state = "released"
 			tup1 = (self.state, self.num_process, self.time_stamp)
-			while q.qsize() > 0:
-				pro = q.get()
+			while self.q.qsize() > 0:
+				pro = self.q.get()
 				addr = (('127.0.0.1',ports[pro[1]])) 
 				client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-				client_socket.connect(addr)
-				client_socket.send(bytes(tup1))
+				client_socket.connect(addr)	
+				client_socket.send(bytes(str(bytes(tup1))))
 				state = eval(client_socket.recv(1024))
 
 	def listen_process(self):
-		cont = 0
-		while cont < 10:
-			cont += 1
+
+		while True:
+
 			server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 			server_socket.bind(('', ports[self.num_process]))
 			server_socket.listen(15)
 			connection_socket, addr = server_socket.accept()
-
-			tup1 = eval(connection_socket.recv(1024))
+			s = connection_socket.recv(1024)
+			if s == "":
+				continue
+			#print s + " **"
+			tup1 = eval(s)
 			self.on_message_received ( tup1[2] )
 			tup2 = (self.state,self.num_process, self.time_stamp)
 			if self.state == "held" or (self.state == "wanted" and self.time_stamp < tup1[2]):
-				q.put(tup2) 
+				self.q.put(tup2) 
 			else:
 				connection_socket.send(tup1)
 			connection_socket.close()
 
-	def init_threads(self):
-		t1 = threading.Thread(target=self.enter_critical_region)
+	def init_thread(self):
 		t2 = threading.Thread(target=self.listen_process)
-		t1.start()
 		t2.start()
+
+	def begin_requests(self):
+		t1 = threading.Thread(target=self.enter_critical_region)
+		t1.start()
+
 
 if __name__ == "__main__":
 	print "opa"
