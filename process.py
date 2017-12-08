@@ -11,6 +11,8 @@ ports = [5005, 5006, 5007]
 def make_request(num_process, t):
 	tup1 = ("wanted", num_process, t)
 	for i in range(0,num_process-1):
+		if i == num_process:
+			continue
 		addr = (('127.0.0.1',ports[i])) 
 		client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 		client_socket.connect(addr)
