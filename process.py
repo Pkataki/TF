@@ -1,4 +1,5 @@
 import socket
+import time
 
 
 number_process = 3
@@ -8,16 +9,12 @@ ips = ['localhost','localhost','localhost']
 ports = [5005, 5006, 5007]
 
 
-
-def listen_process(num_process) : 
-
-
-
-
 class process:
 	time_stamp
 	state = "released"
 	num_process
+	def  __init__(self):
+        
 	def set_num_preocess(self, num_process):
 		self.num_process = num_process
 	def get_state(self):
@@ -29,8 +26,8 @@ class process:
 	def set_time_stamp(self, time_stamp):
 		self.time_stamp = time_stamp
 	def make_request(self, t):
-		tup1 = ("wanted", number_process, t)
-		for i in range(0,self.num_process-1):
+		tup1 = ("wanted", self.num_process, t)
+		for i in range(0,number_process-1):
 			if i == self.num_process:
 				continue
 			addr = (('127.0.0.1',ports[i])) 
@@ -38,10 +35,9 @@ class process:
 			client_socket.connect(addr)
 
 			client_socket.send(bytes(tup1))
-			state = client_socket.recv(1024)
+			state = eval(client_socket.recv(1024))
 			if state[0]  == "held"
-				return False;
-			else if state[0] == "wanted" and  
+				return False; 
 			client_socket.close()
 		return True
 	def enter_critical_region(self):
@@ -49,7 +45,18 @@ class process:
 		t = random.radint()
 		if make_request(self.num_process, t)  == True : 
 			state = "held"
-			
+		#enter critical region
+		sleep(5)
+	def listen_process(self):
+		connectionSocket, addr = server_socket.accept()
+	    tup1 = eval(connection_socket.recv(1024))
+	 	if 
+	    #tup2 = (self.state,self.num_process, self.time_stamp)
+	    connectionSocket.send(capitalizedSentence)
+	    connectionSocket.close()
+
+
+
 
 
 
