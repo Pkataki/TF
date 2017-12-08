@@ -6,7 +6,7 @@ from Queue import *
 
 number_process = 3
 
-ports = [7502, 7503, 7420]
+ports = [7802, 7803, 7820]
 	
 
 class process():
@@ -17,6 +17,8 @@ class process():
 	q  = []
 	t1 = 0
 	t2 = 0
+	mutex = threading.Lock()  
+
 	def __init__(self):
 		self.clock = 0
 		self.q = Queue()
@@ -37,7 +39,7 @@ class process():
 		self.time_stamp = time_stamp
 
 	def on_message_received (self , time_stamp):
-		self.clock = max (self.clock + 1 , time_stamp + 1 )
+		self.time_stamp = max (self.clock + 1 , time_stamp + 1 )
 
 	def make_request(self, t):
 
@@ -48,48 +50,53 @@ class process():
 			addr = (('127.0.0.1',ports[i])) 
 			client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 			client_socket.connect(addr)
-			client_socket.send(bytes(str(bytes(tup1))))
+			client_socket.send(bytes(tup1))
 			s = client_socket.recv(1024)
 
 			if s == "":
-				continue
+				return False
 
 			state = eval(s)
+			
 			if state[0]  == "held":
-				return False; 
+				return False 
+
 			client_socket.close()
 		return True
 
 	def enter_critical_region(self):
 
+		
 		while True:
-			
 			self.state = "wanted"
-			t = random.randint(0 ,number_process)
-			if self.make_request(t)  == True : 
+			if self.make_request(self.time_stamp)  == True : 
 				self.state = "held"
 			#inside critical region
-			time.sleep(5)
+			print "Process " + str(self.num_process) + " is in critical region"
+			time.sleep(3)
+			print "Process " + str(self.num_process) + " is out of critical region"
 			#out of critical region
 			self.state = "released"
 			tup1 = (self.state, self.num_process, self.time_stamp)
+			self.mutex.acquire()
 			while self.q.qsize() > 0:
 				pro = self.q.get()
 				addr = (('127.0.0.1',ports[pro[1]])) 
 				client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 				client_socket.connect(addr)	
-				client_socket.send(bytes(str(bytes(tup1))))
+				client_socket.send(bytes(tup1))
 				state = eval(client_socket.recv(1024))
+				client_socket.close()
+			self.mutex.release()
 
 	def listen_process(self):
-
-		while True:
-
-			server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-			server_socket.bind(('', ports[self.num_process]))
-			server_socket.listen(15)
+		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+		server_socket.bind(('', ports[self.num_process]))
+		server_socket.listen(15)
+		while True:	
 			connection_socket, addr = server_socket.accept()
 			s = connection_socket.recv(1024)
+			
 			if s == "":
 				continue
 			#print s + " **"
@@ -97,10 +104,13 @@ class process():
 			self.on_message_received ( tup1[2] )
 			tup2 = (self.state,self.num_process, self.time_stamp)
 			if self.state == "held" or (self.state == "wanted" and self.time_stamp < tup1[2]):
+				self.mutex.acquire()
 				self.q.put(tup2) 
+				self.mutex.release()
 			else:
-				connection_socket.send(tup1)
-			connection_socket.close()
+				connection_socket.send(bytes(tup1))
+			##connection_socket.close()
+		connection_socket.close()
 
 	def init_thread(self):
 		t2 = threading.Thread(target=self.listen_process)
