@@ -1,6 +1,7 @@
 import socket
 import time
 import thread
+import Queue
 
 number_process = 3
 
