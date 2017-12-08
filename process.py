@@ -1,15 +1,15 @@
-import socket
+from socket import *
 import time
-import thread
-import Queue
+import random
+import threading
+from Queue import *
 
 number_process = 3
 
-ips = ['localhost','localhost','localhost']
 ports = [5005, 5006, 5007]
 	
 
-class process:
+class process():
 	clock = 0
 	time_stamp = 0
 	state = "released"
@@ -20,8 +20,7 @@ class process:
 	def __init__(self):
 		self.clock = 0
 		self.q = Queue()
-		t1 = threading.Thread(target=enter_critical_region)
-		t2 = threading.Thread(target=listen_process)
+		self.init_threads()
 
 	def set_num_process(self, num_process):
 		self.num_process = num_process
@@ -57,10 +56,12 @@ class process:
 		return True
 
 	def enter_critical_region(self):
-		while True:
+		cont = 0
+		while cont < 10:
+			cont += 1
 			self.state = "wanted"
-			t = random.radint()
-			if make_request(self.num_process, t)  == True : 
+			t = random.randint(0 ,number_process)
+			if self.make_request(t)  == True : 
 				self.state = "held"
 			#inside critical region
 			sleep(5)
@@ -74,8 +75,14 @@ class process:
 				client_socket.connect(addr)
 				client_socket.send(bytes(tup1))
 				state = eval(client_socket.recv(1024))
+
 	def listen_process(self):
-		while True:
+		cont = 0
+		while cont < 10:
+			cont += 1
+			server_socket = socket(AF_INET, SOCK_STREAM)
+			server_socket.bind(('', ports[self.num_process]))
+			server_socket.listen(15)
 			connection_socket, addr = server_socket.accept()
 
 			tup1 = eval(connection_socket.recv(1024))
@@ -86,6 +93,12 @@ class process:
 			else:
 				connection_socket.send(tup1)
 			connection_socket.close()
+
+	def init_threads(self):
+		t1 = threading.Thread(target=self.enter_critical_region)
+		t2 = threading.Thread(target=self.listen_process)
+		t1.start()
+		t2.start()
 
 if __name__ == "__main__":
 	print "opa"
