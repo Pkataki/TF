@@ -1,4 +1,4 @@
-from socket import *
+import socket
 import time
 import random
 import threading
@@ -80,7 +80,7 @@ class process():
 		cont = 0
 		while cont < 10:
 			cont += 1
-			server_socket = socket(AF_INET, SOCK_STREAM)
+			server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
 			server_socket.bind(('', ports[self.num_process]))
 			server_socket.listen(15)
 			connection_socket, addr = server_socket.accept()
