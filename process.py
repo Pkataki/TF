@@ -13,11 +13,11 @@ class process:
 	num_process
 
 	def __init__(self):
-    	self.clock = 0
+	    self.clock = 0
 
 	def set_num_process(self, num_process):
 		self.num_process = num_process
-		
+
 	def get_state(self):
 		return self.state
 	def get_time_stamp(self):
@@ -41,8 +41,8 @@ class process:
 
 			client_socket.send(bytes(tup1))
 			state = eval(client_socket.recv(1024))
-			if state[0]  == "held"
-				return False; 
+		    if state[0]  == "held"
+                return False; 
 			client_socket.close()
 		return True
 
