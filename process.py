@@ -76,7 +76,9 @@ class process:
 	def listen_process(self):
 		while True:
 			connection_socket, addr = server_socket.accept()
+
 			tup1 = eval(connection_socket.recv(1024))
+			self.on_message_received ( tup1[2] )
 			tup2 = (self.state,self.num_process, self.time_stamp)
 			if self.state == "held" or (self.state == "wanted" and self.time_stamp < tup1[2]):
 				q.put(tup2) 
